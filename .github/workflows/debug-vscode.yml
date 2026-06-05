@@ -1,4 +1,4 @@
-name: Playground Runner
+name: Debug with vscode
 
 on:
   workflow_dispatch:
