@@ -6,7 +6,7 @@ on:
       os_preset:
         type: choice
         description: "Select runner OS. Labels: https://docs.github.com/en/actions/reference/runners/github-hosted-runners"
-        required: true
+        required: false
         default: ubuntu-latest
         options:
           - ubuntu-latest
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   playground:
-    runs-on: ${{ inputs.os_custom || inputs.os_preset }}
+    runs-on: ${{ inputs.os_custom || inputs.os_preset || 'ubuntu-latest' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -33,22 +33,19 @@ jobs:
 
       - name: Start VS Code Tunnel
         shell: bash
+        working-directory: ${{ runner.temp }}
         run: |
           case "${{ runner.os }}-${{ runner.arch }}" in
-            Linux-*)     os="cli-linux-x64";    ext="tar.gz"; exe="./code" ;;
-            macOS-X64)   os="cli-darwin-x64";   ext="tar.gz"; exe="./code" ;;
-            macOS-ARM64) os="cli-darwin-arm64"; ext="tar.gz"; exe="./code" ;;
-            Windows-*)   os="cli-win32-x64";    ext="zip";    exe="./code.exe" ;;
+            Linux-*)      os="cli-alpine-x64";    ext="tar.gz"; exe="./code" ;;
+            macOS-X64)    os="cli-darwin-x64";    ext="tar.gz"; exe="./code" ;;
+            macOS-ARM64)  os="cli-darwin-arm64";  ext="tar.gz"; exe="./code" ;;
+            Windows-*)    os="cli-win32-x64";     ext="zip";    exe="./code.exe" ;;
             *) echo "unsupported: ${{ runner.os }}-${{ runner.arch }}"; exit 1 ;;
           esac
 
           curl -L "https://code.visualstudio.com/sha/download?build=stable&os=$os" -o "vscode-cli.$ext"
 
-          if [[ "$ext" == "zip" ]]; then
-            unzip -q "vscode-cli.$ext"
-          else
-            tar -xf "vscode-cli.$ext"
-          fi
+          [[ "$ext" == "zip" ]] && unzip -q "vscode-cli.$ext" || tar -xf "vscode-cli.$ext"
 
           "$exe" tunnel \
             --name "gha-${{ github.run_id }}-${{ github.run_attempt }}" \
