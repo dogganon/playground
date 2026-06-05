@@ -1,0 +1,38 @@
+name: Playground Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      os_preset:
+        type: choice
+        description: "Select runner OS. Labels: https://docs.github.com/en/actions/reference/runners/github-hosted-runners"
+        required: true
+        default: ubuntu-latest
+        options:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+      os_custom:
+        type: string
+        description: "Custom runs-on label; overrides dropdown when non-empty"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  playground:
+    runs-on: ${{ inputs.os_custom || inputs.os_preset }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Start VS Code Tunnel
+        uses: justingrote/vscode-action@v0.0.2
+        with:
+          tunnel-name: gha-${{ github.run_id }}-${{ github.run_attempt }}
+          no-cache-cli-auth: true
